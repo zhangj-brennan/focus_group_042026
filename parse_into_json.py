@@ -2,37 +2,48 @@ from docx import Document
 import json
 import re
 
-INPUT_DOCX = "04.20.26 Attitudes on the Supreme Court_ss gs.docx"
-OUTPUT_JSON = "data.json"
+INPUT_DOCX = "nointro_04.27.26 Attitudes on the Supreme Court_CLEAN.docx"
+OUTPUT_JSON = "data_topics.json"
+
+TOPICS = [
+    "Perceptions of the Supreme Court",
+    "Checks and balances",
+    "Lifetime appointments vs. term limits",
+    "Ethics concerns",
+    "Court reform priorities"
+]
+
+
+def clean_text(text):
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def paragraph_text(paragraph):
-    return "".join(run.text for run in paragraph.runs).strip()
+    return clean_text("".join(run.text for run in paragraph.runs))
 
 
 def get_bold_prefix(paragraph):
-    """
-    Returns the bolded text at the beginning of a paragraph.
-    Example:
-    Bold runs: "Jane Doe"
-    Full paragraph: "Jane Doe (ID 123): This is the quote."
-    """
     bold_text = ""
 
     for run in paragraph.runs:
-        text = run.text
-
-        if not text:
+        if not run.text:
             continue
 
         if run.bold:
-            bold_text += text
+            bold_text += run.text
         else:
-            # stop once normal text begins
             if bold_text.strip():
                 break
 
-    return bold_text.strip()
+    return clean_text(bold_text)
+
+
+def is_topic(text):
+    cleaned = clean_text(text).lstrip("o ").strip()
+    for topic in TOPICS:
+        if cleaned.lower() == topic.lower():
+            return topic
+    return None
 
 
 def parse_docx(path):
@@ -41,6 +52,7 @@ def parse_docx(path):
     sections = []
     current_header_parts = []
     current_section = None
+    current_topic = None
 
     for para in doc.paragraphs:
         text = paragraph_text(para)
@@ -48,20 +60,22 @@ def parse_docx(path):
         if not text:
             continue
 
+        topic = is_topic(text)
+        if topic:
+            current_topic = topic
+            continue
+
         bold_prefix = get_bold_prefix(para)
 
-        # Detect quote paragraph:
-        # Bolded name + (id): quote
         if bold_prefix:
             pattern = rf"^{re.escape(bold_prefix)}\s*\((.*?)\)\s*:\s*(.*)$"
             match = re.match(pattern, text, flags=re.DOTALL)
 
             if match:
-                person = bold_prefix.strip()
+                person = bold_prefix
                 id_info = match.group(1).strip()
                 quote = match.group(2).strip()
 
-                # Start a new section if needed
                 if current_section is None:
                     header = "\n\n".join(current_header_parts).strip()
                     current_section = {
@@ -74,13 +88,13 @@ def parse_docx(path):
                 current_section["conversation"].append({
                     "person": person,
                     "id": id_info,
+                    "topic": current_topic,
                     "quote": quote
                 })
 
                 continue
 
-        # If paragraph is not a quote, treat it as intro/header text.
-        # Once we've already started a section, a new intro paragraph starts a new section.
+        # Non-quote paragraphs become section intro/header text
         if current_section is not None:
             current_section = None
             current_header_parts = [text]

@@ -9,22 +9,26 @@
 
   <style>
     @font-face {
-  font-family: "Benton";
-  src: url("Benton Sans/Benton Sans Book.otf");
-}
+      font-family: "Benton";
+      src: url("Benton Sans/Benton Sans Book.otf");
+    }
 
-@font-face {
-  font-family: "BentonStrong";
-  src: url("Benton Sans/Benton Sans Bold.otf");
-}
+    @font-face {
+      font-family: "BentonStrong";
+      src: url("Benton Sans/Benton Sans Bold.otf");
+    }
 
-@font-face {
-  font-family: "BentonMedium";
-  src: url("Benton Sans/Benton Sans Medium.otf");
-}
+    @font-face {
+      font-family: "BentonMedium";
+      src: url("Benton Sans/Benton Sans Medium.otf");
+    }
 
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      overflow-x: clip;
     }
 
     body {
@@ -34,7 +38,8 @@
       color: #111;
     }
 
-    .page {
+    .page,
+    #scrolly {
       width: 100%;
     }
 
@@ -56,32 +61,104 @@
       margin: 0;
     }
 
+    .filter-menu {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      border-top: 1px solid #111;
+      border-bottom: 1px solid #111;
+      padding: 14px 24px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-family: "BentonStrong", sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .checkbox-filters,
+    .button-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #111;
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .filter-check input {
+      margin: 0;
+    }
+
+    .topic-button {
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 0;
+      font-family: "Benton", sans-serif;
+    }
+
+    .topic-button.active {
+      background: #111;
+      color: #fff;
+    }
+
+    #personFilter {
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      padding: 7px 10px;
+      font-size: 12px;
+      border-radius: 0;
+      font-family: "Benton", sans-serif;
+    }
+
+    .no-results {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      font-size: 14px;
+    }
+
     .scrolly-section {
       position: relative;
-      min-height: 120vh;
       padding: 40px 0 80px;
-      border-top: 1px solid #111;
     }
 
     .sticky-header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: relative;
+      top: auto;
+      z-index: 1;
       background: #ffffff;
-      border-bottom: 1px solid #111;
       padding: 18px 24px;
     }
 
     .sticky-header-inner {
       max-width: 900px;
       margin: 0 auto;
-    }
-
-    .section-kicker {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 6px;
     }
 
     .section-title {
@@ -92,12 +169,13 @@
 
     .conversation {
       max-width: 900px;
+      width: min(100% - 2 * var(--gutter, 24px), 900px);
       margin: 0 auto;
       padding: 60px 24px;
     }
 
     .bubble-row {
-        padding:20px;
+      padding: 20px;
       display: flex;
       align-items: center;
       opacity: 0.25;
@@ -115,16 +193,15 @@
     .bubble-row.right {
       justify-content: flex-end;
     }
+
     .bubble-row.center {
-  justify-content: center;
-  text-align: center;
-}
-.bubble-row.center .bubble::after {
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-}
+      justify-content: center;
+      text-align: center;
+    }
+
     .bubble {
       width: min(620px, 100%);
+      max-width: 100%;
       border: 2px solid #111;
       padding: 22px 24px;
       position: relative;
@@ -149,6 +226,11 @@
 
     .bubble-row.right .bubble::after {
       right: 36px;
+    }
+
+    .bubble-row.center .bubble::after {
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
     }
 
     .speaker {
@@ -188,229 +270,498 @@
       height: 40vh;
     }
 
-   
+    /* FILTERED / TILED MODE */
 
-    /* Safer sizing everywhere */
-html,
-body {
-  width: 100%;
-  overflow-x: hidden;
-}
+    .filtered-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
 
-.page,
-#scrolly {
-  width: 100%;
-}
+    .filtered-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
 
-.conversation {
-  width: min(100% - 2 * var(--gutter), 900px);
-}
+    .filtered-column .bubble-row {
+      padding: 0;
+      opacity: 1;
+      display: block;
+    }
 
-/* desktop/default bubble width should never exceed screen */
-.bubble {
-  width: min(620px, 100%);
-  max-width: 100%;
-}
+    .filtered-column .bubble {
+      width: 100% !important;
+      max-width: none;
+    }
 
-@media (max-width: 700px) {
-  :root {
-    --gutter: 16px;
-  }
+    #scrolly.filtered .end-spacer {
+      display: none;
+    }
 
-  .conversation {
-    width: calc(100% - 2 * var(--gutter));
-    padding: 28px 0;
-  }
+    @media (max-width: 700px) {
+      :root {
+        --gutter: 16px;
+      }
 
-  /* Keep vertical rhythm but not huge */
-  .bubble-row {
-    min-height: auto;
-    padding: 36px 0;
-    display: flex;
-  }
+      .filter-menu {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        padding: 12px 16px;
+        gap: 14px;
+      }
 
-  /* 👇 Restore left/right alignment */
-  .bubble-row.left {
-    justify-content: flex-start;
-  }
+      .filter-group {
+        width: 100%;
+      }
 
-  .bubble-row.right {
-    justify-content: flex-end;
-  }
+      #personFilter {
+        width: 100%;
+      }
 
-  .bubble-row.center {
-    justify-content: center;
-  }
+      .conversation {
+        width: calc(100% - 2 * var(--gutter));
+        padding: 28px 0;
+      }
 
-  /* 👇 IMPORTANT: constrain width so alignment is visible */
-  .bubble {
-    width: 70%;
-    max-width: 300px;
-    padding: 18px;
-  }
+      .bubble-row {
+        min-height: auto;
+        padding: 36px 0;
+        display: flex;
+      }
 
-  /* 👇 Fix tails per side */
-  .bubble-row.left .bubble::after {
-    left: 24px;
-    right: auto;
-    transform: rotate(45deg);
-  }
+      .bubble-row.left {
+        justify-content: flex-start;
+      }
 
-  .bubble-row.right .bubble::after {
-    right: 24px;
-    left: auto;
-    transform: rotate(45deg);
-  }
+      .bubble-row.right {
+        justify-content: flex-end;
+      }
 
-  .bubble-row.center .bubble::after {
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-  }
+      .bubble-row.center {
+        justify-content: center;
+      }
 
-  /* Typography tweaks */
-  .quote {
-    font-size: 16px;
-    line-height: 1.35;
-  }
+      .bubble {
+        width: 70% !important;
+        max-width: 300px;
+        padding: 18px;
+      }
 
-  .person {
-    font-size: 12px;
-  }
+      .bubble-row.left .bubble::after {
+        left: 24px;
+        right: auto;
+        transform: rotate(45deg);
+      }
 
-  .id {
-    font-size: 12px;
-    text-align: left;
-  }
-}
+      .bubble-row.right .bubble::after {
+        right: 24px;
+        left: auto;
+        transform: rotate(45deg);
+      }
+
+      .bubble-row.center .bubble::after {
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+      }
+
+      .quote {
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .person {
+        font-size: 12px;
+      }
+
+      .id {
+        font-size: 12px;
+        text-align: left;
+      }
+
+      .filtered-grid {
+        display: block;
+        padding: 16px;
+      }
+
+      .filtered-column {
+        margin-bottom: 18px;
+      }
+
+      .filtered-column .bubble-row {
+        padding: 14px 0;
+      }
+
+      .filtered-column.left .bubble-row {
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .filtered-column.center .bubble-row {
+        display: flex;
+        justify-content: center;
+      }
+
+      .filtered-column.right .bubble-row {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .filtered-column .bubble {
+        width: 70% !important;
+        max-width: 300px;
+      }
+    }
   </style>
 </head>
 
 <body>
-
   <main class="page">
     <section class="intro">
       <h1>Scrolly Conversation Test</h1>
-      <p>
-      </p>
+      <p></p>
     </section>
+
+    <div id="filterMenu" class="filter-menu">
+      <div class="filter-group">
+        <div class="filter-label">ID group</div>
+        <div id="idFilters" class="checkbox-filters"></div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Person</div>
+        <select id="personFilter">
+          <option value="All">All people</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Topic</div>
+        <div id="topicFilters" class="button-filters"></div>
+      </div>
+    </div>
 
     <div id="scrolly"></div>
   </main>
 
   <script>
-  function sendHeight() {
-    const height = document.documentElement.scrollHeight;
-    window.parent.postMessage(
-      { type: "resize-scrolly", height },
-      "*"
-    );
-  }
+    function sendHeight() {
+      const height = document.documentElement.scrollHeight;
+      window.parent.postMessage(
+        { type: "resize-scrolly", height },
+        "*"
+      );
+    }
 
-  window.addEventListener("load", sendHeight);
-  window.addEventListener("resize", sendHeight);
+    window.addEventListener("load", sendHeight);
+    window.addEventListener("resize", sendHeight);
 
-  const resizeObserver = new ResizeObserver(sendHeight);
-  resizeObserver.observe(document.body);
+    if ("ResizeObserver" in window) {
+      const resizeObserver = new ResizeObserver(sendHeight);
+      resizeObserver.observe(document.body);
+    }
 
-  setTimeout(sendHeight, 500);
-  setTimeout(sendHeight, 1500);
-</script>
+    setTimeout(sendHeight, 500);
+    setTimeout(sendHeight, 1500);
+  </script>
 
-<script>
-  const PERSON_COLORS = {
-    "D": "#6CBAD6",
-    "I": "#FFCF01",
-    "R":"#F69679"
-  };
+  <script>
+    const PERSON_COLORS = {
+      "D": "#6CBAD6",
+      "I": "#FFCF01",
+      "R": "#F69679"
+    };
 
-  const PERSON_SIDES = {
-    "D": "left",
-    "I": "center",
-    "R":"right"
-  };
+    const PERSON_SIDES = {
+      "D": "left",
+      "I": "center",
+      "R": "right"
+    };
 
-const DEFAULT_SIDE = "center";
-  const DEFAULT_COLOR = "#E5E5E5";
+    const TOPIC_ORDER = [
+      "Perceptions of Supreme Court",
+      "Checks and balances",
+      "Lifetime appointments vs. term limits",
+      "Ethics concerns",
+      "Court reform priorities"
+    ];
 
-  d3.json("data_short.json").then(data => {
-    const scrolly = d3.select("#scrolly");
+    const DEFAULT_SIDE = "center";
+    const DEFAULT_COLOR = "#E5E5E5";
 
-    const sections = scrolly
-      .selectAll(".scrolly-section")
-      .data(data)
-      .join("section")
-      .attr("class", "scrolly-section");
+    let rawData = [];
+    let activeIdGroups = new Set();
+    let allIdGroups = new Set();
+    let activePerson = "All";
+    let activeTopic = "All";
+    let currentObserver = null;
 
-    const headers = sections.append("div").attr("class", "sticky-header");
-    const headerInner = headers.append("div").attr("class", "sticky-header-inner");
+    function getIdGroup(d) {
+      return (d.id || "").split(",")[0].trim();
+    }
 
-    // headerInner.append("div")
-    //   .attr("class", "section-kicker")
-    //   .text((d, i) => `Section ${i + 1}`);
+    function getAllQuotes(data) {
+      return data.flatMap(section => section.conversation || []);
+    }
 
-   headerInner
-  .append("div")
-  .attr("class", "section-title")
-  .html(d => d.header);
+    function uniqueSorted(values) {
+      return Array.from(new Set(values.filter(Boolean))).sort();
+    }
 
-    const conversations = sections.append("div").attr("class", "conversation");
+    function shouldShowHeaders() {
+      return (
+        activePerson === "All" &&
+        activeTopic === "All" &&
+        activeIdGroups.size === allIdGroups.size
+      );
+    }
 
-    const rows = conversations
-      .selectAll(".bubble-row")
-      .data(d => d.conversation)
-      .join("div")
-        .attr("class", d => `bubble-row ${PERSON_SIDES[d.id.split(",")[0]] || DEFAULT_SIDE}`);
-    const messageWrap = rows
-      .append("div")
-      .attr("class", "message-wrap");
+    function setupFilters(data) {
+      const allQuotes = getAllQuotes(data);
 
-    // messageWrap
-    //   .append("img")
-    //   .attr("class", "avatar")
-    //   .attr("src", d => d.avatar || "avatars/default.png")
-    //   .attr("alt", d => d.person);
-    var colorsTemp = ["red","green","blue"]
-    const bubbles = messageWrap
-      .append("div")
-      .attr("class", "bubble")
+      const idGroups = uniqueSorted(allQuotes.map(getIdGroup));
+      const people = uniqueSorted(allQuotes.map(d => d.person));
+      const discoveredTopics = uniqueSorted(allQuotes.map(d => d.topic));
 
-        .style("width", d => {
-            const len = d.quote.length;
-            if (len < 80) return "220px";
-            if (len < 160) return "320px";
-            if (len < 300) return "420px";
-            return "400px";
-    })
-     // .style("background",colorsTemp[Math.round[Math.random()*colorsTemp.length()]])
-      .style("background", d => PERSON_COLORS[d.id.split(",")[0]] || DEFAULT_COLOR);
+      const topics = [
+        ...TOPIC_ORDER.filter(topic => discoveredTopics.includes(topic)),
+        ...discoveredTopics.filter(topic => !TOPIC_ORDER.includes(topic))
+      ];
 
-    const speaker = bubbles.append("div").attr("class", "speaker");
+      activeIdGroups = new Set(idGroups);
+      allIdGroups = new Set(idGroups);
 
-    speaker.append("div")
-      .attr("class", "person")
-      .text(d => d.person);
+      const idWrap = d3.select("#idFilters");
 
-    speaker.append("div")
-      .attr("class", "id")
-      .text(d => d.id);
+      const labels = idWrap
+        .selectAll("label")
+        .data(idGroups)
+        .join("label")
+        .attr("class", "filter-check");
 
-    bubbles.append("div")
-      .attr("class", "quote")
-      .text(d => d.quote);
+      labels.html(d => `
+        <input type="checkbox" value="${d}" checked>
+        <span>${d}</span>
+      `);
 
-    scrolly.append("div").attr("class", "end-spacer");
+      labels.select("input").on("change", function(event, d) {
+        if (this.checked) {
+          activeIdGroups.add(d);
+        } else {
+          activeIdGroups.delete(d);
+        }
 
-    const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          d3.select(entry.target).classed("active", entry.isIntersecting);
+        renderScrolly(getFilteredData());
+      });
+
+      const personSelect = d3.select("#personFilter");
+
+      personSelect
+        .selectAll("option.person-option")
+        .data(people)
+        .join("option")
+        .attr("class", "person-option")
+        .attr("value", d => d)
+        .text(d => d);
+
+      personSelect.on("change", function() {
+        activePerson = this.value;
+        renderScrolly(getFilteredData());
+      });
+
+      const topicWrap = d3.select("#topicFilters");
+      const topicOptions = ["All", ...topics];
+
+      topicWrap
+        .selectAll("button")
+        .data(topicOptions)
+        .join("button")
+        .attr("class", d => `topic-button ${d === activeTopic ? "active" : ""}`)
+        .text(d => d)
+        .on("click", function(event, d) {
+          activeTopic = d;
+
+          topicWrap
+            .selectAll("button")
+            .classed("active", x => x === activeTopic);
+
+          renderScrolly(getFilteredData());
         });
-      },
-      { threshold: 0.55 }
-    );
+    }
 
-    document.querySelectorAll(".bubble-row").forEach(row => observer.observe(row));
-  });
-</script>
+    function getFilteredData() {
+      return rawData
+        .map(section => {
+          const filteredConversation = (section.conversation || []).filter(d => {
+            const idGroup = getIdGroup(d);
+
+            const matchesId = activeIdGroups.has(idGroup);
+            const matchesPerson = activePerson === "All" || d.person === activePerson;
+            const matchesTopic = activeTopic === "All" || d.topic === activeTopic;
+
+            return matchesId && matchesPerson && matchesTopic;
+          });
+
+          return {
+            ...section,
+            conversation: filteredConversation
+          };
+        })
+        .filter(section => section.conversation.length > 0);
+    }
+
+    function drawBubbles(rows) {
+      const bubbles = rows
+        .append("div")
+        .attr("class", "bubble")
+        .style("width", d => {
+          const len = (d.quote || "").length;
+          if (len < 80) return "220px";
+          if (len < 160) return "320px";
+          if (len < 300) return "420px";
+          return "400px";
+        })
+        .style("background", d => PERSON_COLORS[getIdGroup(d)] || DEFAULT_COLOR);
+
+      const speaker = bubbles
+        .append("div")
+        .attr("class", "speaker");
+
+      speaker
+        .append("div")
+        .attr("class", "person")
+        .text(d => d.person);
+
+      speaker
+        .append("div")
+        .attr("class", "id")
+        .text(d => d.id);
+
+      bubbles
+        .append("div")
+        .attr("class", "quote")
+        .text(d => d.quote);
+    }
+
+    function renderFilteredGrid(data) {
+      const scrolly = d3.select("#scrolly");
+
+      const tiled = scrolly
+        .append("div")
+        .attr("class", "filtered-grid");
+
+      const columns = tiled
+        .selectAll(".filtered-column")
+        .data(["left", "center", "right"])
+        .join("div")
+        .attr("class", d => `filtered-column ${d}`);
+
+      const allQuotes = data.flatMap(section => section.conversation || []);
+
+      columns.each(function(side) {
+        const columnQuotes = allQuotes.filter(d => {
+          const idGroup = getIdGroup(d);
+          return (PERSON_SIDES[idGroup] || DEFAULT_SIDE) === side;
+        });
+
+        const rows = d3.select(this)
+          .selectAll(".bubble-row")
+          .data(columnQuotes)
+          .join("div")
+          .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
+
+        drawBubbles(rows);
+      });
+
+      sendHeight();
+    }
+
+    function renderScrolly(data) {
+      const scrolly = d3.select("#scrolly");
+      scrolly.selectAll("*").remove();
+
+      if (currentObserver) {
+        currentObserver.disconnect();
+      }
+
+      const showHeaders = shouldShowHeaders();
+
+      scrolly.classed("filtered", !showHeaders);
+
+      if (!data.length) {
+        scrolly
+          .append("div")
+          .attr("class", "no-results")
+          .text("No quotes match the selected filters.");
+
+        sendHeight();
+        return;
+      }
+
+      if (!showHeaders) {
+        renderFilteredGrid(data);
+        return;
+      }
+
+      const sections = scrolly
+        .selectAll(".scrolly-section")
+        .data(data)
+        .join("section")
+        .attr("class", "scrolly-section");
+
+      const headers = sections
+        .append("div")
+        .attr("class", "sticky-header");
+
+      const headerInner = headers
+        .append("div")
+        .attr("class", "sticky-header-inner");
+
+      headerInner
+        .append("div")
+        .attr("class", "section-title")
+        .html(d => d.header);
+
+      const conversations = sections
+        .append("div")
+        .attr("class", "conversation");
+
+      const rows = conversations
+        .selectAll(".bubble-row")
+        .data(d => d.conversation)
+        .join("div")
+        .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
+
+      drawBubbles(rows);
+
+      scrolly.append("div").attr("class", "end-spacer");
+
+      currentObserver = new IntersectionObserver(
+        entries => {
+          entries.forEach(entry => {
+            d3.select(entry.target).classed("active", entry.isIntersecting);
+          });
+        },
+        { threshold: 0.55 }
+      );
+
+      document.querySelectorAll(".bubble-row").forEach(row => {
+        currentObserver.observe(row);
+      });
+
+      sendHeight();
+    }
+
+    d3.json("data_topics.json").then(data => {
+      rawData = data;
+      setupFilters(rawData);
+      renderScrolly(rawData);
+    });
+  </script>
 </body>
 </html>
