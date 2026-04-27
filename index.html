@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrolly Conversation</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    @font-face {
+  font-family: "Benton";
+  src: url("Benton Sans/Benton Sans Book.otf");
+}
+
+@font-face {
+  font-family: "BentonStrong";
+  src: url("Benton Sans/Benton Sans Bold.otf");
+}
+
+@font-face {
+  font-family: "BentonMedium";
+  src: url("Benton Sans/Benton Sans Medium.otf");
+}
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Benton", sans-serif;
+      background: #ffffff;
+      color: #111;
+    }
+
+    .page {
+      width: 100%;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 24px 40px;
+    }
+
+    .intro h1 {
+      font-size: 14px;
+      line-height: 1.05;
+      margin: 0 0 16px;
+    }
+
+    .intro p {
+      font-size: 11px;
+      line-height: 2;
+      margin: 0;
+    }
+
+    .scrolly-section {
+      position: relative;
+      min-height: 120vh;
+      padding: 40px 0 80px;
+      border-top: 1px solid #111;
+    }
+
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #ffffff;
+      border-bottom: 1px solid #111;
+      padding: 18px 24px;
+    }
+
+    .sticky-header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .section-kicker {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .conversation {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .bubble-row {
+        padding:20px;
+      display: flex;
+      align-items: center;
+      opacity: 0.25;
+      transition: opacity 300ms ease;
+    }
+
+    .bubble-row.active {
+      opacity: 1;
+    }
+
+    .bubble-row.left {
+      justify-content: flex-start;
+    }
+
+    .bubble-row.right {
+      justify-content: flex-end;
+    }
+    .bubble-row.center {
+  justify-content: center;
+  text-align: center;
+}
+.bubble-row.center .bubble::after {
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+    .bubble {
+      width: min(620px, 100%);
+      border: 2px solid #111;
+      padding: 22px 24px;
+      position: relative;
+      box-shadow: 8px 8px 0 #111;
+    }
+
+    .bubble::after {
+      content: "";
+      position: absolute;
+      bottom: -18px;
+      width: 28px;
+      height: 28px;
+      background: inherit;
+      border-right: 2px solid #111;
+      border-bottom: 2px solid #111;
+      transform: rotate(45deg);
+    }
+
+    .bubble-row.left .bubble::after {
+      left: 36px;
+    }
+
+    .bubble-row.right .bubble::after {
+      right: 36px;
+    }
+
+    .speaker {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #111;
+      padding-bottom: 8px;
+    }
+
+    .person {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .id {
+      font-size: 13px;
+      opacity: 0.75;
+      text-align: right;
+    }
+
+    .quote {
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .quote::before {
+      content: "“";
+    }
+
+    .quote::after {
+      content: "”";
+    }
+
+    .end-spacer {
+      height: 40vh;
+    }
+
+    @media (max-width: 700px) {
+      .intro h1 {
+        font-size: 34px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+
+      .bubble-row,
+      .bubble-row.left,
+      .bubble-row.right {
+        justify-content: center;
+        min-height: 80vh;
+      }
+
+      .bubble {
+        box-shadow: 5px 5px 0 #111;
+      }
+
+      .quote {
+        font-size: 20px;
+      }
+
+      .speaker {
+        display: block;
+      }
+
+      .id {
+        margin-top: 4px;
+        text-align: left;
+      }
+    }
+
+    /* Safer sizing everywhere */
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.page,
+#scrolly {
+  width: 100%;
+}
+
+.conversation {
+  width: min(100% - 2 * var(--gutter), 900px);
+}
+
+/* desktop/default bubble width should never exceed screen */
+.bubble {
+  width: min(620px, 100%);
+  max-width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  :root {
+    --gutter: 16px;
+  }
+
+  .intro {
+    padding: 36px 0 20px;
+  }
+
+  .intro h1,
+  .section-title {
+    font-size: 1.6rem;
+    line-height: 1.05;
+  }
+
+  .intro p {
+    font-size: 1rem;
+  }
+
+  .sticky-header {
+    padding: 14px 0;
+  }
+
+  .section-kicker {
+    font-size: 12px;
+  }
+
+  .scrolly-section {
+    min-height: auto;
+    padding-bottom: 40px;
+  }
+
+  .conversation {
+    width: calc(100% - 2 * var(--gutter));
+    padding: 28px 0;
+  }
+
+  .bubble-row,
+  .bubble-row.left,
+  .bubble-row.right,
+  .bubble-row.center {
+    min-height: auto;
+    justify-content: center;
+    padding: 42px 0;
+  }
+
+  .bubble {
+    width: 100% !important;
+    max-width: 100%;
+    padding: 18px 18px;
+  }
+
+  .bubble-row.left .bubble,
+  .bubble-row.right .bubble,
+  .bubble-row.center .bubble {
+    width: 100% !important;
+  }
+
+  .speaker {
+    display: block;
+  }
+
+  .person {
+    font-size: 14px;
+  }
+
+  .id {
+    margin-top: 4px;
+    text-align: left;
+    font-size: 12px;
+  }
+
+  .quote {
+    font-size: 14px;
+    line-height: 1.35;
+    max-width: none;
+  }
+
+  /* Keep all tails readable on mobile */
+  .bubble::after,
+  .bubble-row.left .bubble::after,
+  .bubble-row.right .bubble::after,
+  .bubble-row.center .bubble::after {
+    left: 28px;
+    right: auto;
+    transform: rotate(45deg);
+  }
+
+  .end-spacer {
+    height: 20vh;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="intro">
+      <h1>Scrolly Conversation</h1>
+      <p>
+       test
+      </p>
+    </section>
+
+    <div id="scrolly"></div>
+  </main>
+<script>
+  const PERSON_COLORS = {
+    "D": "#6CBAD6",
+    "I": "#FFCF01",
+    "R":"#F69679"
+  };
+
+  const PERSON_SIDES = {
+    "D": "left",
+    "I": "center",
+    "R":"right"
+  };
+
+const DEFAULT_SIDE = "center";
+  const DEFAULT_COLOR = "#E5E5E5";
+
+  d3.json("data_short.json").then(data => {
+    const scrolly = d3.select("#scrolly");
+
+    const sections = scrolly
+      .selectAll(".scrolly-section")
+      .data(data)
+      .join("section")
+      .attr("class", "scrolly-section");
+
+    const headers = sections.append("div").attr("class", "sticky-header");
+    const headerInner = headers.append("div").attr("class", "sticky-header-inner");
+
+    // headerInner.append("div")
+    //   .attr("class", "section-kicker")
+    //   .text((d, i) => `Section ${i + 1}`);
+
+    headerInner.append("div")
+      .attr("class", "section-title")
+      .text(d => d.header);
+
+    const conversations = sections.append("div").attr("class", "conversation");
+
+    const rows = conversations
+      .selectAll(".bubble-row")
+      .data(d => d.conversation)
+      .join("div")
+        .attr("class", d => `bubble-row ${PERSON_SIDES[d.id.split(",")[0]] || DEFAULT_SIDE}`);
+    const messageWrap = rows
+      .append("div")
+      .attr("class", "message-wrap");
+
+    // messageWrap
+    //   .append("img")
+    //   .attr("class", "avatar")
+    //   .attr("src", d => d.avatar || "avatars/default.png")
+    //   .attr("alt", d => d.person);
+    var colorsTemp = ["red","green","blue"]
+    const bubbles = messageWrap
+      .append("div")
+      .attr("class", "bubble")
+
+        .style("width", d => {
+            const len = d.quote.length;
+            if (len < 80) return "220px";
+            if (len < 160) return "320px";
+            if (len < 300) return "420px";
+            return "400px";
+    })
+     // .style("background",colorsTemp[Math.round[Math.random()*colorsTemp.length()]])
+      .style("background", d => PERSON_COLORS[d.id.split(",")[0]] || DEFAULT_COLOR);
+
+    const speaker = bubbles.append("div").attr("class", "speaker");
+
+    speaker.append("div")
+      .attr("class", "person")
+      .text(d => d.person);
+
+    speaker.append("div")
+      .attr("class", "id")
+      .text(d => d.id);
+
+    bubbles.append("div")
+      .attr("class", "quote")
+      .text(d => d.quote);
+
+    scrolly.append("div").attr("class", "end-spacer");
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          d3.select(entry.target).classed("active", entry.isIntersecting);
+        });
+      },
+      { threshold: 0.55 }
+    );
+
+    document.querySelectorAll(".bubble-row").forEach(row => observer.observe(row));
+  });
+</script>
+</body>
+</html>
