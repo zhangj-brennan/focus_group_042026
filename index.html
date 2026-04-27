@@ -188,39 +188,7 @@
       height: 40vh;
     }
 
-    @media (max-width: 700px) {
-      .intro h1 {
-        font-size: 34px;
-      }
-
-      .section-title {
-        font-size: 24px;
-      }
-
-      .bubble-row,
-      .bubble-row.left,
-      .bubble-row.right {
-        justify-content: center;
-        min-height: 80vh;
-      }
-
-      .bubble {
-        box-shadow: 5px 5px 0 #111;
-      }
-
-      .quote {
-        font-size: 20px;
-      }
-
-      .speaker {
-        display: block;
-      }
-
-      .id {
-        margin-top: 4px;
-        text-align: left;
-      }
-    }
+   
 
     /* Safer sizing everywhere */
 html,
@@ -244,37 +212,9 @@ body {
   max-width: 100%;
 }
 
-/* Mobile */
 @media (max-width: 700px) {
   :root {
     --gutter: 16px;
-  }
-
-  .intro {
-    padding: 36px 0 20px;
-  }
-
-  .intro h1,
-  .section-title {
-    font-size: 1.6rem;
-    line-height: 1.05;
-  }
-
-  .intro p {
-    font-size: 1rem;
-  }
-
-  .sticky-header {
-    padding: 14px 0;
-  }
-
-  .section-kicker {
-    font-size: 12px;
-  }
-
-  .scrolly-section {
-    min-height: auto;
-    padding-bottom: 40px;
   }
 
   .conversation {
@@ -282,59 +222,64 @@ body {
     padding: 28px 0;
   }
 
-  .bubble-row,
-  .bubble-row.left,
-  .bubble-row.right,
-  .bubble-row.center {
+  /* Keep vertical rhythm but not huge */
+  .bubble-row {
     min-height: auto;
+    padding: 36px 0;
+    display: flex;
+  }
+
+  /* 👇 Restore left/right alignment */
+  .bubble-row.left {
+    justify-content: flex-start;
+  }
+
+  .bubble-row.right {
+    justify-content: flex-end;
+  }
+
+  .bubble-row.center {
     justify-content: center;
-    padding: 42px 0;
   }
 
+  /* 👇 IMPORTANT: constrain width so alignment is visible */
   .bubble {
-    width: 100% !important;
-    max-width: 100%;
-    padding: 18px 18px;
+    width: 70%;
+    max-width: 300px;
+    padding: 18px;
   }
 
-  .bubble-row.left .bubble,
-  .bubble-row.right .bubble,
-  .bubble-row.center .bubble {
-    width: 100% !important;
-  }
-
-  .speaker {
-    display: block;
-  }
-
-  .person {
-    font-size: 14px;
-  }
-
-  .id {
-    margin-top: 4px;
-    text-align: left;
-    font-size: 12px;
-  }
-
-  .quote {
-    font-size: 14px;
-    line-height: 1.35;
-    max-width: none;
-  }
-
-  /* Keep all tails readable on mobile */
-  .bubble::after,
-  .bubble-row.left .bubble::after,
-  .bubble-row.right .bubble::after,
-  .bubble-row.center .bubble::after {
-    left: 28px;
+  /* 👇 Fix tails per side */
+  .bubble-row.left .bubble::after {
+    left: 24px;
     right: auto;
     transform: rotate(45deg);
   }
 
-  .end-spacer {
-    height: 20vh;
+  .bubble-row.right .bubble::after {
+    right: 24px;
+    left: auto;
+    transform: rotate(45deg);
+  }
+
+  .bubble-row.center .bubble::after {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  /* Typography tweaks */
+  .quote {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .person {
+    font-size: 12px;
+  }
+
+  .id {
+    font-size: 12px;
+    text-align: left;
   }
 }
   </style>
@@ -383,9 +328,10 @@ const DEFAULT_SIDE = "center";
     //   .attr("class", "section-kicker")
     //   .text((d, i) => `Section ${i + 1}`);
 
-    headerInner.append("div")
-      .attr("class", "section-title")
-      .text(d => d.header);
+   headerInner
+  .append("div")
+  .attr("class", "section-title")
+  .html(d => d.header);
 
     const conversations = sections.append("div").attr("class", "conversation");
 
