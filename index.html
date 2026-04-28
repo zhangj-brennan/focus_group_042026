@@ -461,6 +461,18 @@
   border-top: 2px solid #111;
   padding-top: 18px;
 }
+
+.section-embed {
+  max-width: 900px;
+  margin: 24px auto;
+}
+
+.section-embed iframe {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  border: 0;
+}
   </style>
 </head>
 
@@ -528,7 +540,7 @@
     };
 
     const TOPIC_ORDER = [
-      "Perceptions of Supreme Court",
+      "Perceptions of the Supreme Court",
       "Checks and balances",
       "Lifetime appointments vs. term limits",
       "Ethics concerns",
@@ -731,7 +743,7 @@ function scrollToTop() {
 
   data.forEach((section, i) => {
     const topic = section.conversation?.[0]?.topic || "";
-    const prevTopic = i > 0 ? data[i - 1].conversation?.[0]?.topic || "" : "";
+    const prevTopic = i > 0 ? (data[i - 1].conversation?.[0]?.topic || "") : "";
 
     if (topic && topic !== prevTopic) {
       filteredWrap
