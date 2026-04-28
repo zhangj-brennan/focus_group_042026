@@ -417,6 +417,47 @@
         max-width: 300px;
       }
     }
+    .filtered-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.filtered-intro {
+  max-width: 900px;
+  margin: 40px auto 20px;
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.filtered-wrap .filtered-grid {
+  padding: 0;
+}
+
+@media (max-width: 700px) {
+  .filtered-wrap {
+    padding: 16px;
+  }
+
+  .filtered-intro {
+    margin: 32px auto 16px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+.filtered-topic,
+.sticky-header-inner .filtered-topic {
+  max-width: 900px;
+  margin: 56px auto 16px;
+  font-family: "BentonStrong", sans-serif;
+  font-size: 24px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-top: 2px solid #111;
+  padding-top: 18px;
+}
   </style>
 </head>
 
@@ -678,38 +719,59 @@ function scrollToTop() {
         .text(d => d.quote);
     }
 
-    function renderFilteredGrid(data) {
-      const scrolly = d3.select("#scrolly");
+ function renderFilteredGrid(data) {
+  const scrolly = d3.select("#scrolly");
 
-      const tiled = scrolly
+  const filteredWrap = scrolly
+    .append("div")
+    .attr("class", "filtered-wrap");
+
+  data.forEach((section, i) => {
+    const topic = section.conversation?.[0]?.topic || "";
+    const prevTopic = i > 0 ? data[i - 1].conversation?.[0]?.topic || "" : "";
+
+    if (topic && topic !== prevTopic) {
+      filteredWrap
         .append("div")
-        .attr("class", "filtered-grid");
+        .attr("class", "filtered-topic")
+        .text(topic);
+    }
 
-      const columns = tiled
-        .selectAll(".filtered-column")
-        .data(["left", "center", "right"])
-        .join("div")
-        .attr("class", d => `filtered-column ${d}`);
+    filteredWrap
+      .append("div")
+      .attr("class", "filtered-intro")
+      .html(section.header);
 
-      const allQuotes = data.flatMap(section => section.conversation || []);
+    const tiled = filteredWrap
+      .append("div")
+      .attr("class", "filtered-grid");
 
-      columns.each(function(side) {
-        const columnQuotes = allQuotes.filter(d => {
-          const idGroup = getIdGroup(d);
-          return (PERSON_SIDES[idGroup] || DEFAULT_SIDE) === side;
-        });
+    const columns = tiled
+      .selectAll(".filtered-column")
+      .data(["left", "center", "right"])
+      .join("div")
+      .attr("class", d => `filtered-column ${d}`);
 
-        const rows = d3.select(this)
-          .selectAll(".bubble-row")
-          .data(columnQuotes)
-          .join("div")
-          .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
+    const allQuotes = section.conversation || [];
 
-        drawBubbles(rows);
+    columns.each(function(side) {
+      const columnQuotes = allQuotes.filter(d => {
+        const idGroup = getIdGroup(d);
+        return (PERSON_SIDES[idGroup] || DEFAULT_SIDE) === side;
       });
 
-      sendHeight();
-    }
+      const rows = d3.select(this)
+        .selectAll(".bubble-row")
+        .data(columnQuotes)
+        .join("div")
+        .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
+
+      drawBubbles(rows);
+    });
+  });
+
+  sendHeight();
+}
 
     function renderScrolly(data) {
       const scrolly = d3.select("#scrolly");
@@ -739,23 +801,35 @@ function scrollToTop() {
       }
 
       const sections = scrolly
-        .selectAll(".scrolly-section")
-        .data(data)
-        .join("section")
-        .attr("class", "scrolly-section");
+  .selectAll(".scrolly-section")
+  .data(data)
+  .join("section")
+  .attr("class", "scrolly-section");
 
-      const headers = sections
-        .append("div")
-        .attr("class", "sticky-header");
+const headers = sections
+  .append("div")
+  .attr("class", "sticky-header");
 
-      const headerInner = headers
-        .append("div")
-        .attr("class", "sticky-header-inner");
+const headerInner = headers
+  .append("div")
+  .attr("class", "sticky-header-inner");
 
-      headerInner
-        .append("div")
-        .attr("class", "section-title")
-        .html(d => d.header);
+// 👇 ADD TOPIC
+headerInner
+  .filter((d, i) => {
+    const topic = d.conversation?.[0]?.topic || "";
+    const prevTopic = i > 0 ? data[i - 1].conversation?.[0]?.topic || "" : "";
+    return topic && topic !== prevTopic;
+  })
+  .append("div")
+  .attr("class", "filtered-topic")
+  .text(d => d.conversation?.[0]?.topic || "");
+
+// EXISTING HEADER
+headerInner
+  .append("div")
+  .attr("class", "section-title")
+  .html(d => d.header);
 
       const conversations = sections
         .append("div")
