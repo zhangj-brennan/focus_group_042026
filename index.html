@@ -209,16 +209,17 @@
     }
 
     .bubble::after {
-      content: "";
-      position: absolute;
-      bottom: -18px;
-      width: 28px;
-      height: 28px;
-      background: inherit;
-      border-right: 2px solid #111;
-      border-bottom: 2px solid #111;
-      transform: rotate(45deg);
-    }
+  content: "";
+  position: absolute;
+  bottom: -12px; /* was -18px */
+  width: 20px;
+  height: 20px;
+  background: inherit;
+  border-right: 2px solid #111;
+  border-bottom: 2px solid #111;
+  transform: rotate(45deg);
+  z-index: 1;
+}
 
     .bubble-row.left .bubble::after {
       left: 36px;
