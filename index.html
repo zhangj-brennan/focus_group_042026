@@ -582,11 +582,25 @@ function scrollToTop() {
         .text(d => d);
 
       personSelect.on("change", function() {
-        activePerson = this.value;
-        renderScrolly(getFilteredData());
-          scrollToTop();
+  activePerson = this.value;
 
-      });
+  // Reset ID filters
+  activeIdGroups = new Set(allIdGroups);
+
+  d3.select("#idFilters")
+    .selectAll("input")
+    .property("checked", true);
+
+  // Reset topic filter
+  activeTopic = "All";
+
+  d3.select("#topicFilters")
+    .selectAll("button")
+    .classed("active", d => d === activeTopic);
+
+  renderScrolly(getFilteredData());
+  scrollToTop();
+});
 
       const topicWrap = d3.select("#topicFilters");
       const topicOptions = ["All", ...topics];
