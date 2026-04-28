@@ -175,7 +175,7 @@
     }
 
     .bubble-row {
-      padding: 20px;
+      padding: 12px;
       display: flex;
       align-items: center;
       opacity: 0.25;
@@ -196,14 +196,13 @@
 
     .bubble-row.center {
       justify-content: center;
-      text-align: center;
     }
 
     .bubble {
       width: min(620px, 100%);
-      max-width: 100%;
+      max-width: 40%;
       border: 2px solid #111;
-      padding: 22px 24px;
+      padding:12px 14px;
       position: relative;
       box-shadow: 8px 8px 0 #111;
     }
@@ -491,6 +490,11 @@
       "Ethics concerns",
       "Court reform priorities"
     ];
+    const ID_LABELS = {
+  "D": "Democrat",
+  "R": "Republican",
+  "I": "Independent"
+};
 
     const DEFAULT_SIDE = "center";
     const DEFAULT_COLOR = "#E5E5E5";
@@ -521,7 +525,12 @@
         activeIdGroups.size === allIdGroups.size
       );
     }
-
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
     function setupFilters(data) {
       const allQuotes = getAllQuotes(data);
 
@@ -545,10 +554,10 @@
         .join("label")
         .attr("class", "filter-check");
 
-      labels.html(d => `
-        <input type="checkbox" value="${d}" checked>
-        <span>${d}</span>
-      `);
+     labels.html(d => `
+  <input type="checkbox" value="${d}" checked>
+  <span>${ID_LABELS[d] || d}</span>
+`);
 
       labels.select("input").on("change", function(event, d) {
         if (this.checked) {
@@ -558,6 +567,8 @@
         }
 
         renderScrolly(getFilteredData());
+          scrollToTop();
+
       });
 
       const personSelect = d3.select("#personFilter");
@@ -573,6 +584,8 @@
       personSelect.on("change", function() {
         activePerson = this.value;
         renderScrolly(getFilteredData());
+          scrollToTop();
+
       });
 
       const topicWrap = d3.select("#topicFilters");
@@ -592,6 +605,8 @@
             .classed("active", x => x === activeTopic);
 
           renderScrolly(getFilteredData());
+            scrollToTop();
+
         });
     }
 
