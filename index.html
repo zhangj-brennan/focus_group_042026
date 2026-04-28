@@ -61,19 +61,24 @@
       margin: 0;
     }
 
-    .filter-menu {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: #fff;
-      border-top: 1px solid #111;
-      border-bottom: 1px solid #111;
-      padding: 14px 24px;
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      align-items: flex-start;
-    }
+.filter-menu {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  border-top: 1px solid #111;
+  border-bottom: 1px solid #111;
+
+  /* 👇 key changes */
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 24px;
+
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
 
     .filter-group {
       display: flex;
@@ -308,13 +313,11 @@
         --gutter: 16px;
       }
 
-      .filter-menu {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        padding: 12px 16px;
-        gap: 14px;
-      }
+       .filter-menu {
+    max-width: 100%;
+    margin: 0;
+    padding: 12px 16px;
+  }
 
       .filter-group {
         width: 100%;
@@ -464,8 +467,8 @@
 <body>
   <main class="page">
     <section class="intro">
-      <h1>Scrolly Conversation Test</h1>
-      <p></p>
+      <!-- <h1>Scrolly Conversation Test</h1>
+      <p></p> -->
     </section>
 
     <div id="filterMenu" class="filter-menu">
