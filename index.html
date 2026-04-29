@@ -508,12 +508,18 @@
 
   <script>
     function sendHeight() {
-      const height = document.documentElement.scrollHeight;
-      window.parent.postMessage(
-        { type: "resize-scrolly", height },
-        "*"
-      );
-    }
+  requestAnimationFrame(() => {
+    const height = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight
+    );
+
+    window.parent.postMessage(
+      { type: "resize-scrolly", height },
+      "*"
+    );
+  });
+}
 
     window.addEventListener("load", sendHeight);
     window.addEventListener("resize", sendHeight);
@@ -788,94 +794,99 @@ function scrollToTop() {
 
   sendHeight();
 }
+function renderScrolly(data) {
+  const scrolly = d3.select("#scrolly");
+  scrolly.selectAll("*").remove();
 
-    function renderScrolly(data) {
-      const scrolly = d3.select("#scrolly");
-      scrolly.selectAll("*").remove();
+  if (currentObserver) {
+    currentObserver.disconnect();
+  }
 
-      if (currentObserver) {
-        currentObserver.disconnect();
-      }
+  const showHeaders = shouldShowHeaders();
 
-      const showHeaders = shouldShowHeaders();
+  scrolly.classed("filtered", !showHeaders);
 
-      scrolly.classed("filtered", !showHeaders);
+  if (!data.length) {
+    scrolly
+      .append("div")
+      .attr("class", "no-results")
+      .text("No quotes match the selected filters.");
 
-      if (!data.length) {
-        scrolly
-          .append("div")
-          .attr("class", "no-results")
-          .text("No quotes match the selected filters.");
+    sendHeight();
+    setTimeout(sendHeight, 250);
+    setTimeout(sendHeight, 1000);
+    return;
+  }
 
-        sendHeight();
-        return;
-      }
+  if (!showHeaders) {
+    renderFilteredGrid(data);
+    return;
+  }
 
-      if (!showHeaders) {
-        renderFilteredGrid(data);
-        return;
-      }
+  const sections = scrolly
+    .selectAll(".scrolly-section")
+    .data(data)
+    .join("section")
+    .attr("class", "scrolly-section");
 
-      const sections = scrolly
-  .selectAll(".scrolly-section")
-  .data(data)
-  .join("section")
-  .attr("class", "scrolly-section");
+  const headers = sections
+    .append("div")
+    .attr("class", "sticky-header");
 
-const headers = sections
-  .append("div")
-  .attr("class", "sticky-header");
+  const headerInner = headers
+    .append("div")
+    .attr("class", "sticky-header-inner");
 
-const headerInner = headers
-  .append("div")
-  .attr("class", "sticky-header-inner");
+  // 👇 ADD TOPIC
+  headerInner
+    .filter((d, i) => {
+      const topic = d.conversation?.[0]?.topic || "";
+      const prevTopic = i > 0 ? data[i - 1].conversation?.[0]?.topic || "" : "";
+      return topic && topic !== prevTopic;
+    })
+    .append("div")
+    .attr("class", "filtered-topic")
+    .text(d => d.conversation?.[0]?.topic || "");
 
-// 👇 ADD TOPIC
-headerInner
-  .filter((d, i) => {
-    const topic = d.conversation?.[0]?.topic || "";
-    const prevTopic = i > 0 ? data[i - 1].conversation?.[0]?.topic || "" : "";
-    return topic && topic !== prevTopic;
-  })
-  .append("div")
-  .attr("class", "filtered-topic")
-  .text(d => d.conversation?.[0]?.topic || "");
+  // EXISTING HEADER
+  headerInner
+    .append("div")
+    .attr("class", "section-title")
+    .html(d => d.header);
 
-// EXISTING HEADER
-headerInner
-  .append("div")
-  .attr("class", "section-title")
-  .html(d => d.header);
+  const conversations = sections
+    .append("div")
+    .attr("class", "conversation");
 
-      const conversations = sections
-        .append("div")
-        .attr("class", "conversation");
+  const rows = conversations
+    .selectAll(".bubble-row")
+    .data(d => d.conversation)
+    .join("div")
+    .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
 
-      const rows = conversations
-        .selectAll(".bubble-row")
-        .data(d => d.conversation)
-        .join("div")
-        .attr("class", d => `bubble-row ${PERSON_SIDES[getIdGroup(d)] || DEFAULT_SIDE}`);
+  drawBubbles(rows);
 
-      drawBubbles(rows);
+  scrolly.append("div").attr("class", "end-spacer");
 
-      scrolly.append("div").attr("class", "end-spacer");
-
-      currentObserver = new IntersectionObserver(
-        entries => {
-          entries.forEach(entry => {
-            d3.select(entry.target).classed("active", entry.isIntersecting);
-          });
-        },
-        { threshold: 0.55 }
-      );
-
-      document.querySelectorAll(".bubble-row").forEach(row => {
-        currentObserver.observe(row);
+  currentObserver = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        d3.select(entry.target).classed("active", entry.isIntersecting);
       });
+    },
+    { threshold: 0.55 }
+  );
 
-      sendHeight();
-    }
+  document.querySelectorAll(".bubble-row").forEach(row => {
+    currentObserver.observe(row);
+  });
+
+  // 👇 iframe height updates (ONLY ADDITION)
+  sendHeight();
+  setTimeout(sendHeight, 250);
+  setTimeout(sendHeight, 1000);
+}
+   
 
     d3.json("data_topics.json").then(data => {
       rawData = data;
