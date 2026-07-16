@@ -42,8 +42,6 @@
   body {
     margin: 0;
     font-family: "Benton", sans-serif;
-    font-family: var(--ff-bcj-sans, "BCJ Benton Sans, sans-serif");
-    font-family: inherit;
 
     background: var(--bg);
     color: var(--text);
@@ -891,7 +889,7 @@ function renderScrolly(data) {
 }
    
 
-    d3.json("data_topics.json").then(data => {
+    d3.json("data_topics_06092026.json").then(data => {
       rawData = data;
       setupFilters(rawData);
       renderScrolly(rawData);
