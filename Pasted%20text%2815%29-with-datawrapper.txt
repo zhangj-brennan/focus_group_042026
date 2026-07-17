@@ -451,7 +451,7 @@
 .section-embed {
   width: 100%;
   margin-top: 24px;
-  margin-bottom: 0px;
+  margin-bottom: 24px;
 }
 .section-embed iframe {
   display: block;
@@ -1144,7 +1144,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Criticism of the Court for being overly political and a desire for greater impartiality were themes. When asked to describe the Court using one word, most chose negative terms. Several participants, including Republicans, described the justices as politically biased or out of touch.<div class=\"section-embed\"><iframe title=\"Positive Negative Rating\" src=\"https://datawrapper.dwcdn.net/ASN3y/3/\" height=\"500\" frameborder=\"0\" scrolling=\"no\" aria-label=\"Chart\" data-external=\"1\"></iframe></div><br><br>Politicized",
+    "header": "Criticism of the Court for being overly political and a desire for greater impartiality were themes. When asked to describe the Court using one word, most chose negative terms. Several participants, including Republicans, described the justices as politically biased or out of touch.<br><br>Politicized",
     "conversation": [
       {
         "person": "Debra",
@@ -1401,7 +1401,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "One popular proposal <a href=\"https://www.brennancenter.org/series/perspectives-supreme-court-term-limits\" target=\"_blank\" rel=\"noopener noreferrer\">supported</a> by the Brennan Center, constitutional scholars, and current and former federal and state judges across the ideological spectrum would establish 18-year terms for Supreme Court justices, along with a system of regularized appointments in which two new justices would be appointed per presidential term. We asked voters to share their thoughts on this proposal and on term limits generally. Participants across groups expressed strong support, consistent with <a href=\"https://www.brennancenter.org/our-work/research-reports/public-polling-supreme-court\" target=\"_blank\" rel=\"noopener noreferrer\">previous polling</a>. Some quibbled over the ideal term length, while others said they would support term limits regardless of the specifics.",
+    "header": "One popular proposal by the Brennan Center, constitutional scholars, and current and former federal and state judges across the ideological spectrum would establish 18-year terms for Supreme Court justices, along with a system of regularized appointments in which two new justices would be appointed per presidential term. We asked voters to share their thoughts on this proposal and on term limits generally. Participants across groups expressed strong support, consistent with . Some quibbled over the ideal term length, while others said they would support term limits regardless of the specifics.",
     "conversation": [
       {
         "person": "Pam",
@@ -1586,7 +1586,7 @@ function renderScrolly(data) {
     "conversation": [
       {
         "person": "Frankie",
-        "id": "I, VA",
+        "id": "D, VA",
         "topic": "Ethics concerns",
         "quote": "It\'s always pointing to Thomas. It seems like Thomas is always the one stepping out of line, for the most part."
       },
