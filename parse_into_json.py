@@ -3,15 +3,16 @@ import json
 import re
 
 INPUT_DOCX = "nointro_04.27.26 Attitudes on the Supreme Court_CLEAN.docx"
-INPUT_DOCX = "06.09.26 Attitudes on the Supreme Court_ ss gs-ZL.docx"
-OUTPUT_JSON = "data_topics_06092026.json"
+INPUT_DOCX = "nointro_06.09.26 Attitudes on the Supreme Court_ ss gs-ZL.docx"
+OUTPUT_JSON = "data_topics_07272026.json"
 
 TOPICS = [
     "Perceptions of the Supreme Court",
     "Checks and balances",
     "Lifetime appointments vs. term limits",
     "Ethics concerns",
-    "Court reform priorities"
+    "Court reform priorities",
+    "Hopes for reform"
 ]
 
 

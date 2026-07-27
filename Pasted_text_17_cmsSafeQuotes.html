@@ -763,15 +763,15 @@ function scrollToTop() {
       speaker
         .append("div")
         .attr("class", "person")
-        .text(d => d.person);
+        .text(d => cmsSafeHtml(d.person));
       speaker
         .append("div")
         .attr("class", "id")
-        .text(d => d.id);
+        .text(d => cmsSafeHtml(d.id));
       bubbles
         .append("div")
         .attr("class", "quote")
-        .text(d => d.quote);
+        .text(d => cmsSafeHtml(d.quote));
     }
     function parseTablePerson(value) {
       const text = (value || "").trim();

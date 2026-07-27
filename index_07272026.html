@@ -221,11 +221,12 @@
     font-size: 14px;
     line-height: 1.35;
   }
-.quote::before {
-  content: '"';
+.quote-main::before {
+  content: "\201C";
 }
-.quote::after {
-  content: '"';
+
+.quote-main::after {
+  content: "\201D";
 }
   .end-spacer {
     height: 10vh;
@@ -459,6 +460,9 @@
   min-width: 100%;
   border: 0;
 }
+.italicized-case {
+  font-style: italic;
+}
 </style>
 <main class="page">
     <div class="filter-menu" id="filterMenu">
@@ -574,66 +578,101 @@ const ITALIC_PHRASES = [
   "Roe v. Wade",
   "Brown v. Board of Education",
   "Obergefell v. Hodges",
-  "Dobbs",
-  "Roe",
-  "Jackson Women’s Health Organization"
+  "Dobbs v. Jackson Women’s Health Organization",
+  "Roe"
 ];
-function italicizePhrases(root = document.body) {
-  const phrases = ITALIC_PHRASES
-    .slice()
-    .sort((a, b) => b.length - a.length)
-    .map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  if (!phrases.length) return;
-  const regex = new RegExp(`(${phrases.join("|")})`, "g");
+
+function normalizeItalicText(text) {
+  return String(text || "")
+    .normalize("NFC")
+    .replace(/[\u2018\u2019\u02BC\uFF07]/g, "'");
+}
+function italicizePhrases() {
+  const root = document.querySelector("#scrolly");
+  if (!root) return;
+
+  const patterns = [
+    /Brown v\. Board of Education/g,
+    /Roe v\. Wade/g,
+    /Obergefell v\. Hodges/g,
+    /Dobbs v\. Jackson Women.s Health Organization/g,
+    /Roe/g
+  ];
+
   const walker = document.createTreeWalker(
     root,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode(node) {
-        if (!node.nodeValue || !regex.test(node.nodeValue)) {
-          regex.lastIndex = 0;
-          return NodeFilter.FILTER_REJECT;
-        }
-        regex.lastIndex = 0;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    }
+    NodeFilter.SHOW_TEXT
   );
-  const nodes = [];
+
+  const textNodes = [];
   let node;
-  while ((node = walker.nextNode())) nodes.push(node);
-  nodes.forEach(textNode => {
-    const frag = document.createDocumentFragment();
-    const parts = textNode.nodeValue.split(regex);
-    parts.forEach(part => {
-      if (ITALIC_PHRASES.includes(part)) {
-        const span = document.createElement("span");
-        span.className = "italicized-case";
-        span.textContent = part;
-        frag.appendChild(span);
-      } else {
-        frag.appendChild(document.createTextNode(part));
+
+  while ((node = walker.nextNode())) {
+    if (
+      node.nodeValue.trim() &&
+      !node.parentElement.closest(".italicized-case")
+    ) {
+      textNodes.push(node);
+    }
+  }
+
+  textNodes.forEach(textNode => {
+    let text = textNode.nodeValue;
+    let matches = [];
+
+    patterns.forEach(pattern => {
+      pattern.lastIndex = 0;
+
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        matches.push({
+          start: match.index,
+          end: match.index + match[0].length
+        });
       }
     });
-    textNode.parentNode.replaceChild(frag, textNode);
+
+    if (!matches.length) return;
+
+    matches.sort((a, b) => a.start - b.start);
+
+    const fragment = document.createDocumentFragment();
+    let position = 0;
+
+    matches.forEach(match => {
+      fragment.appendChild(
+        document.createTextNode(text.slice(position, match.start))
+      );
+
+      const span = document.createElement("span");
+      span.className = "italicized-case";
+      span.textContent = text.slice(match.start, match.end);
+      fragment.appendChild(span);
+
+      position = match.end;
+    });
+
+    fragment.appendChild(
+      document.createTextNode(text.slice(position))
+    );
+
+    textNode.parentNode.replaceChild(fragment, textNode);
   });
 }
 function cmsSafeHtml(text) {
-  return String(text || "")
-    .replace(/&amp;nbsp;/gi, " ")
-    .replace(/&amp;lsquo;/gi, "‘")
-    .replace(/&amp;rsquo;/gi, "’")
-    .replace(/&amp;ldquo;/gi, "“")
-    .replace(/&amp;rdquo;/gi, "”")
-    .replace(/&amp;mdash;/gi, "—")
+  let value = String(text || "");
 
-    .replace(/&nbsp;/gi, " ")
+  for (let i = 0; i < 5; i++) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = value;
+    const decoded = textarea.value;
+
+    if (decoded === value) break;
+    value = decoded;
+  }
+
+  return value
     .replace(/\u00A0/g, " ")
-    .replace(/&lsquo;/gi, "‘")
-    .replace(/&rsquo;/gi, "’")
-    .replace(/&ldquo;/gi, "“")
-    .replace(/&rdquo;/gi, "”")
-    .replace(/&mdash;/gi, "—")
     .trim();
 }
     function getIdGroup(d) {
@@ -763,15 +802,42 @@ function scrollToTop() {
       speaker
         .append("div")
         .attr("class", "person")
-        .text(d => d.person);
+        .text(d => cmsSafeHtml(d.person));
       speaker
         .append("div")
         .attr("class", "id")
-        .text(d => d.id);
-      bubbles
-        .append("div")
-        .attr("class", "quote")
-        .text(d => d.quote);
+        .text(d => cmsSafeHtml(d.id));
+      const quoteWrap = bubbles
+  .append("div")
+  .attr("class", "quote");
+
+quoteWrap.each(function(d) {
+  const fullQuote = cmsSafeHtml(d.quote);
+
+  // Matches a square-bracketed editorial note at the end.
+  const match = fullQuote.match(/^(.*?)(\s*\[[^\]]+\]\s*)$/);
+
+  const container = d3.select(this);
+
+  if (match) {
+    container
+      .append("span")
+      .attr("class", "quote-main")
+      .text(match[1].trimEnd());
+
+    container.append("span").text(" ");
+
+    container
+      .append("span")
+      .attr("class", "quote-note")
+      .text(match[2].trim());
+  } else {
+    container
+      .append("span")
+      .attr("class", "quote-main")
+      .text(fullQuote);
+  }
+});
     }
     function parseTablePerson(value) {
       const text = (value || "").trim();
@@ -1073,7 +1139,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Three-quarters of participants described their view of the Court as somewhere between positive and negative.\n\nYet across all three groups, participants evaluated the Court critically. Even those who described their views as mixed or mostly positive quickly veered toward criticism, often aimed at perceived partisanship, lifetime appointments, and specific rulings they disagreed with. Praise, on the other hand, was more abstract, grounded in ideals about what the Court should be or, among independents and Democrats, lingering admiration for its past.\n\nMostly Positive",
+    "header": "<div class=\"datawrapper-chart\"><iframe title=\"\" aria-label=\"Chart\" id=\"datawrapper-chart-vgVlN\" src=\"https://datawrapper.dwcdn.net/vgVlN/\" scrolling=\"no\" frameborder=\"0\" style=\"width: 100%; border: none;\" height=\"500\" data-external=\"1\"></iframe></div><p>Three-quarters of participants described their view of the Court as somewhere between positive and negative.<br><br>Yet across all three groups, participants evaluated the Court critically. Even those who described their views as mixed or mostly positive quickly veered toward criticism, often aimed at perceived partisanship, lifetime appointments, and specific rulings they disagreed with. Praise, on the other hand, was more abstract, grounded in ideals about what the Court should be or, among independents and Democrats, lingering admiration for its past.<br><br><strong>Mostly Positive</strong>",
     "conversation": [
       {
         "person": "Scott",
@@ -1084,7 +1150,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "In Between",
+    "header": "<strong>In Between</strong>",
     "conversation": [
       {
         "person": "Penny",
@@ -1131,7 +1197,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Mostly Negative",
+    "header": "<strong>Mostly Negative</strong>",
     "conversation": [
       {
         "person": "Sarah",
@@ -1154,8 +1220,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Criticism of the Court for being overly political and a desire for greater impartiality were themes. When asked to describe the Court using one word, most chose negative terms. Several participants, including Republicans, described the justices as politically biased or out of touch.\n\nPoliticized",
-    "conversation": [
+"header": "<div class=\"datawrapper-chart\"><iframe title=\"\" aria-label=\"Chart\" id=\"datawrapper-chart-ASN3y\" src=\"https://datawrapper.dwcdn.net/ASN3y/\" scrolling=\"no\" frameborder=\"0\" style=\"width:100%;border:none;\" height=\"500\" data-external=\"1\"></iframe></div>Criticism of the Court for being overly political and a desire for greater impartiality were themes. When asked to describe the Court using one word, most chose negative terms. Several participants, including Republicans, described the justices as politically biased or out of touch.<br><br><strong>Politicized</strong>",    "conversation": [
       {
         "person": "Debra",
         "id": "R, NJ",
@@ -1195,7 +1260,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Out of Touch",
+    "header": "<strong>Out of Touch</strong>",
     "conversation": [
       {
         "person": "Raquel",
@@ -1411,7 +1476,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "One popular proposal by the Brennan Center, constitutional scholars, and current and former federal and state judges across the ideological spectrum would establish 18-year terms for Supreme Court justices, along with a system of regularized appointments in which two new justices would be appointed per presidential term. We asked voters to share their thoughts on this proposal and on term limits generally. Participants across groups expressed strong support, consistent with . Some quibbled over the ideal term length, while others said they would support term limits regardless of the specifics.",
+    "header": "One popular <a href=\"https://www.brennancenter.org/series/perspectives-supreme-court-term-limits\" target=\"_blank\" rel=\"noopener noreferrer\">proposal</a> by the Brennan Center, constitutional scholars, and current and former federal and state judges across the ideological spectrum would establish 18-year terms for Supreme Court justices, along with a system of regularized appointments in which two new justices would be appointed per presidential term. We asked voters to share their thoughts on this proposal and on term limits generally. Participants across groups expressed strong support, consistent with <a href=\"https://www.brennancenter.org/our-work/research-reports/public-polling-supreme-court\" target=\"_blank\" rel=\"noopener noreferrer\">previous polling</a>. Some quibbled over the ideal term length, while others said they would support term limits regardless of the specifics.",
     "conversation": [
       {
         "person": "Pam",
@@ -1596,7 +1661,7 @@ function renderScrolly(data) {
     "conversation": [
       {
         "person": "Frankie",
-        "id": "D, VA",
+        "id": "I, VA",
         "topic": "Ethics concerns",
         "quote": "It’s always pointing to Thomas. It seems like Thomas is always the one stepping out of line, for the most part."
       },
@@ -1814,7 +1879,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "To close out the discussions, each participant was asked what single change they would make to the Court if they had a magic wand with no constraints. A few proposed concrete reforms, including limiting tenure or increasing its ability to check the other branches. Only one person — Dale (R, TN) — suggested expanding the Court. (Participants weren’t specifically asked for their views on Court expansion.) Most participants, however, simply described their ideal for how the Court should operate. Across the board, they articulated a vision for a fair, impartial, and accountable high court.\n\nLimited Tenure",
+    "header": "To close out the discussions, each participant was asked what single change they would make to the Court if they had a magic wand with no constraints. A few proposed concrete reforms, including limiting tenure or increasing its ability to check the other branches. Only one person — Dale (R, TN) — suggested expanding the Court. (Participants weren’t specifically asked for their views on Court expansion.) Most participants, however, simply described their ideal for how the Court should operate. Across the board, they articulated a vision for a fair, impartial, and accountable high court.<br><br><strong>Limited Tenure</strong>",
     "conversation": [
       {
         "person": "Jeremy",
@@ -1837,7 +1902,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Rebalancing the Branches",
+    "header": "<strong>Rebalancing the Branches</strong>",
     "conversation": [
       {
         "person": "Vincent",
@@ -1854,7 +1919,7 @@ function renderScrolly(data) {
     ]
   },
   {
-    "header": "Impartiality, Fairness, and Accountability",
+    "header": "<strong>Impartiality, Fairness, and Accountability</strong>",
     "conversation": [
       {
         "person": "Borg",
